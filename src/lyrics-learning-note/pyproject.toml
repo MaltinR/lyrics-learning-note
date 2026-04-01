@@ -1,0 +1,15 @@
+[project]
+name = "lyrics-learning-note"
+version = "0.1.0"
+description = "Learn new languages via lyrics"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.135.2",
+    "google-cloud-texttospeech>=2.35.0",
+    "google-cloud-translate>=3.25.0",
+    "google-genai>=1.69.0",
+    "lyricsgenius>=3.11.0",
+    "uvicorn>=0.42.0",
+    "yt-dlp>=2026.3.17",
+]
