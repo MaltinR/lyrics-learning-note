@@ -38,4 +38,6 @@ async def search_lyrics():
 
 app.include_router(api_router)
 
+print("Server is starting to run")
+
 # uvicorn main:app --port 3000
