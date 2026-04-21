@@ -1,12 +1,21 @@
 from fastapi import FastAPI, APIRouter
 
+from schemas import NewSongRequest
+from song_providers.song_process import download
+from song_providers.song_metadata import SongMetadata
+
 app = FastAPI()
 
 api_router = APIRouter(prefix="/api")
 
 @api_router.post("/songs")
-async def new_song():
-    return {"message": "WIP"}
+async def new_song(req: NewSongRequest):
+    metadata : SongMetadata = await download(req.url)
+    # TODO: change to target response
+    return {
+        "id": metadata.id,
+        "title": metadata.title,
+    }
 
 @api_router.put("/songs/{song_id}")
 async def update_song(song_id: str):
@@ -14,6 +23,10 @@ async def update_song(song_id: str):
 
 @api_router.get("/songs/{song_id}")
 async def get_song(song_id: str):
+    return {"message": f"{song_id} WIP"}
+
+@api_router.put("/songs/{song_id}/audio")
+async def download_song_audio(song_id: str):
     return {"message": f"{song_id} WIP"}
 
 @api_router.post("/translate")
