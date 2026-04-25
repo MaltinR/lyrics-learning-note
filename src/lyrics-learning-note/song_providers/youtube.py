@@ -10,16 +10,12 @@ from song_providers.song_metadata import SongMetadata
 ydl_opts = {'format': 'bestaudio/best'}
 
 class YouTube(SongProvider):
-    async def download(self, url: HttpUrl, id: str) -> SongMetadata:
+    async def download(self, url: HttpUrl) -> tuple[bytes, SongMetadata]:
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            stream_url = info['url']
+            info = ydl.extract_info(str(url), download=False)
+            stream_url = info.get('url')
+            duration_seconds = info.get('duration')
+            title = info.get("title")
 
-        audio_bytes = requests.get(stream_url).content
-        file_path = os.path.join("audios", f"{id}.mp3")
-        with open(file_path, "wb") as f:
-            f.write(audio_bytes)
-
-        title = info.get("title")
-        # TODO: store it in db
-        return SongMetadata(title, id)
+        audio_bytes : bytes = requests.get(stream_url).content
+        return audio_bytes, SongMetadata(title, duration_seconds)

@@ -1,7 +1,7 @@
 class SongMetadata:
     title: str
-    id: str
+    duration_seconds: float
 
-    def __init__(self, title: str, id: str):
+    def __init__(self, title: str, duration_seconds: float):
         self.title = title
-        self.id = id
+        self.duration_seconds = duration_seconds

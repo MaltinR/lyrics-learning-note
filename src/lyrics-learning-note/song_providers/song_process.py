@@ -7,7 +7,7 @@ from song_providers.youtube import YouTube
 from song_providers.dev_provider import DevProvider
 from song_providers.song_metadata import SongMetadata
 
-async def download(url: HttpUrl) -> SongMetadata:
+async def download(url: HttpUrl) -> tuple[bytes, SongMetadata]:
     host = url.host
 
     provider : SongProvider
@@ -18,7 +18,5 @@ async def download(url: HttpUrl) -> SongMetadata:
         provider = DevProvider()
     else:
         raise Exception("Invalid source of url")
-    
-    id = str(uuid.uuid4())
 
-    return await provider.download(url, id)
+    return await provider.download(url)

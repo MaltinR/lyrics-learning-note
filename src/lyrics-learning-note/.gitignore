@@ -9,4 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
+.env
+
 test.mp3
+data

@@ -4,5 +4,5 @@ from song_providers.song_metadata import SongMetadata
 
 class SongProvider(ABC):
     @abstractmethod
-    async def download(self, url: HttpUrl, id: str) -> SongMetadata:
+    async def download(self, url: HttpUrl) -> tuple[bytes, SongMetadata]:
         pass

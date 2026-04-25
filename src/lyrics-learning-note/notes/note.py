@@ -25,10 +25,17 @@ class References(BaseModel):
     class Config:
         populate_by_name = True
 
-class SongMetadata(BaseModel):
+class Note(BaseModel):
     id: str
     title: str
-    song: str
+    # song: str # uuid
     audio: AudioSegment
     lyrics: List[LyricItem]
     references: References
+
+    @classmethod
+    def create(cls, id: str, title: str, duration: float):
+        audio : AudioSegment = AudioSegment(start_time=0, end_time=duration)
+        lyrics = []
+        references : References = References(fullTranslations=[])
+        return cls(id=id, title=title, audio=audio, lyrics=lyrics, references=references)
