@@ -1,0 +1,45 @@
+import asyncio
+import io
+from pydantic import HttpUrl
+from yt_dlp import YoutubeDL
+
+from song_providers.song_provider import SongProvider
+from song_providers.song_metadata import SongMetadata
+
+class YouTube(SongProvider):
+    async def download(self, url: HttpUrl) -> tuple[bytes, SongMetadata]:
+        # '-' tells yt-dlp to output the file to stdout (memory)
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': '-', 
+            'logtostderr': True,
+            'quiet': True,
+        }
+
+        with YoutubeDL(ydl_opts) as ydl:
+            # 1. Get Metadata first
+            info = ydl.extract_info(str(url), download=False)
+            title = info.get("title")
+            duration = info.get("duration")
+        
+        # Better yet, use a Subprocess for maximum speed and reliability
+        cmd = [
+            'yt-dlp',
+            '-f', 'bestaudio',
+            '--no-playlist',
+            '-o', '-', # Output to stdout
+            str(url)
+        ]
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        print("Downloading...")
+        stdout, stderr = await process.communicate()
+        
+        # You'll still need the metadata, which you can get in a separate quick call
+        # or by parsing the JSON from yt-dlp.
+        return stdout, SongMetadata(title, duration) # Simplified for brevity

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
 from dotenv import load_dotenv
 
 from schemas import (
@@ -29,9 +29,11 @@ async def get_all_songs():
     return list
 
 @api_router.post("/songs")
-async def new_song(req: NewSongRequest):
-    note = await song_handler.new_song(req.url)
-    return note
+async def new_song(req: NewSongRequest, request: Request):
+    # note = await song_handler.new_song(req.url)
+    # return note
+    return await song_handler.new_song(req.url, request)
+
 
 @api_router.put("/songs/{song_id}")
 async def update_song(song_id: str, new_note: Note):
@@ -42,6 +44,13 @@ async def update_song(song_id: str, new_note: Note):
 async def get_song(song_id: str):
     note = await song_handler.get_song(song_id)
     return note
+
+@api_router.delete("/songs/{song_id}")
+async def delete_song(song_id: str):
+    await song_handler.delete_song(song_id)
+    return {
+        "songId": song_id
+    }
 
 @api_router.get("/songs/{song_id}/audio")
 async def download_song_audio(song_id: str):

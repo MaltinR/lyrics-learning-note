@@ -14,8 +14,8 @@ async def download(url: HttpUrl) -> tuple[bytes, SongMetadata]:
 
     if any(host.endswith(domain) for domain in ['youtube.com', 'youtu.be']):
         provider = YouTube()
-    elif any(host.endswith(domain) for domain in ['.dev']):
-        provider = DevProvider()
+    # elif any(host.endswith(domain) for domain in ['.dev']):
+    #     provider = DevProvider()
     else:
         raise Exception("Invalid source of url")
 

@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -26,13 +27,22 @@ class Gemini(Explainer):
             thinking_config=types.ThinkingConfig(include_thoughts=False),
         )
 
-        stream = await client.aio.models.generate_content_stream(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=config
-        )
+        try:
+            stream = await client.aio.models.generate_content_stream(
+                model="gemini-2.5-flash",
+                contents=contents,
+                config=config
+            )
 
-        async for chunk in stream:
-            print(chunk.text)
-            if chunk.text:
-                yield chunk.text
+            async for chunk in stream:
+                print(chunk.text)
+                if chunk.text:
+                    yield json.dumps({
+                        "type": "deltaText",
+                        "deltaText": chunk.text,
+                    })
+        except Exception as e:
+            yield json.dumps({
+                "type": "error",
+                "error": str(e),
+            })
