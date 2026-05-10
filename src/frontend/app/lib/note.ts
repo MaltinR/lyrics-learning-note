@@ -23,10 +23,10 @@ export async function getAllNotes(): Promise<Array<NoteListInfo>> {
 
 export async function getNote(id: string, baseUrl?: string): Promise<Note> {
   const url: string = `${baseUrl ?? ""}/api/songs/${id}`;
-  console.log(url);
+  // console.log(url);
   const res = await axios.get(url);
   const data: Note = res.data;
-  console.log(data);
+  // console.log(data);
   return data;
 }
 

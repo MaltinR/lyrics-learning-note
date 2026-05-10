@@ -7,6 +7,7 @@ import ModalFooterButton from "./ModalFooterButton";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getExplanationStream } from "~/lib/explain";
 import { Edit3, Languages, Play, Speech, Square } from "lucide-react";
+import useIsMobile from "~/hooks/useIsMoile";
 
 function MainContent({
   isPlaying,
@@ -33,8 +34,10 @@ function MainContent({
   explanation: string;
   errorText: string | null;
 }) {
+const isMobile = useIsMobile();
+
   return (
-    <div className="mb-4 mt-2 flex-1">
+    <div className="mb-4 mt-2 flex-1 flex flex-col min-h-0">
       <div className="border-b border-[#DEDCD9] pb-2 mb-2 ">
         <div className="mx-4 flex justify-between items-start">
           <div>
@@ -79,7 +82,7 @@ function MainContent({
           </div>
         </div>
       </div>
-      <div className="min-h-48 max-h-96 flex flex-col overflow-y-scroll mx-4">
+      <div className={`${isMobile ? "flex-1 min-h-0 " : "min-h-48 max-h-96 "}flex flex-col overflow-y-scroll mx-4`}>
         {targetLang == null || originalLang == null || errorText != null ? (
           <div className="flex-1 flex flex-col justify-center items-center">
             {originalLang == null && <div>Please select original language</div>}
