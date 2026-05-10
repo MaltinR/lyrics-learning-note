@@ -40,7 +40,10 @@ function MainContent({
           <div>
             {<div className="font-bold">{originalLyrics}</div>}
             {translatedLyrics != null && (
-              <div>{`Translation: ${translatedLyrics}`}</div>
+              <div className="flex items-center text-gray-500">
+                <Languages className="w-4 h-4 mr-0.5" />
+                <div>{`Translation: ${translatedLyrics}`}</div>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-1 opacity-100 ">
@@ -194,7 +197,7 @@ export default function ExplanationModal({
       (el) => el.lang === targetLang,
     )?.content;
     return result != null ? result : null;
-  }, [targetLang]);
+  }, [targetLang, lyricsLine]);
 
   useEffect(() => {
     setTempLyricsLine((line) => {

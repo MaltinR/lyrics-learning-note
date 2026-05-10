@@ -1,4 +1,4 @@
-import { X, Play, Square } from "lucide-react";
+import { Play, Square, Pause } from "lucide-react";
 import type { ModalType } from "~/types/modalType";
 import AudioTimeSelector from "./AudioTimeSelector";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -24,8 +24,13 @@ export default function LyricsLineEditModal({
   setModal: (type: ModalType) => void;
 }) {
   const [tempLyricsItem, setTempLyricsItem] = useState<LyricItem>(lyricsLine);
+  const [currentTime, setCurrentTime] = useState<number>(tempLyricsItem.audio.from);
 
-  const { playSegment, stop, isSegmentPlaying } = useGlobalAudio();
+  const { playSegment, stop, pause, segmentCurrentTime, isSegmentPlaying } = useGlobalAudio(undefined, {highRefreshRate: true});
+
+  const finalCurrentTime = useMemo(() => {
+    return isSegmentPlaying ? segmentCurrentTime : currentTime;
+  }, [segmentCurrentTime, isSegmentPlaying, currentTime]);
 
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,17 +53,23 @@ export default function LyricsLineEditModal({
   }, [tempLyricsItem]);
 
   const handleSelectionChange = useCallback((start: number, end: number) => {
-    // setStart(start);
-    // setEnd(end);
     setTempLyricsItem((item) => ({ ...item, audio: { from: start, to: end } }));
   }, []);
 
+  const handleCurrentTimeChange = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
+  const handlePause = useCallback(() => {
+    pause();
+  }, [pause])
   const handleStop = useCallback(() => {
+    setCurrentTime(tempLyricsItem.audio.from);
     stop();
-  }, [stop]);
+  }, [stop, tempLyricsItem]);
   const handlePlay = useCallback(() => {
-    playSegment(uuid(), tempLyricsItem.audio.from, tempLyricsItem.audio.to);
-  }, [playSegment, tempLyricsItem]);
+    playSegment(uuid(), currentTime, tempLyricsItem.audio.to);
+  }, [playSegment, tempLyricsItem, currentTime]);
 
   useEffect(() => {
     return () => {
@@ -67,45 +78,37 @@ export default function LyricsLineEditModal({
   }, [stop]);
 
   return (
-    // <div className="bg-white rounded-[12px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] w-full max-w-lg overflow-hidden border border-[#DEDCD9] animate-in fade-in zoom-in-95 duration-200">
     <Modal>
-      {/* Header */}
       <ModalHeader title="Lyrics Line" onClose={() => setModal("none")} />
-      {/* <div className="px-5 py-4 border-b border-[#DEDCD9] flex justify-between items-center">
-        <h3 className="text-[14px] font-semibold text-[#37352F]">
-          Lyrics Line
-        </h3>
-        <button
-          onClick={() => setModal("none")}
-          className="text-[#7C7B76] hover:bg-[#F2F1EE] rounded p-1.5 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div> */}
-
-      {/* Body */}
+      
       <div className="p-5 space-y-6">
-        {/* 1. Timeline Selection */}
         <div>
           <AudioTimeSelector
             audioBlob={audioBlob}
+            currentTime={finalCurrentTime}
             onChange={handleSelectionChange}
+            onCurrentTimeChange={handleCurrentTimeChange}
             initialStart={tempLyricsItem.audio.from}
             initialEnd={tempLyricsItem.audio.to}
           />
           <button
             className="p-1 rounded hover:bg-[#d8e8f8] text-[#7C7B76] transition-colors mt-2"
-            onClick={isSegmentPlaying ? handleStop : handlePlay}
+            onClick={isSegmentPlaying ? handlePause : handlePlay}
           >
             {isSegmentPlaying ? (
-              <Square className="w-6 h-6 " fill="currentColor" />
+              <Pause className="w-6 h-6 " fill="currentColor" />
             ) : (
               <Play className="w-6 h-6" fill="currentColor" />
             )}
           </button>
+          <button
+            className="p-1 rounded hover:bg-[#d8e8f8] text-[#7C7B76] transition-colors mt-2"
+            onClick={handleStop}
+          >
+            <Square className="w-6 h-6 " fill="currentColor" />
+          </button>
         </div>
 
-        {/* 2. Current Line Lyrics */}
         <div>
           <label className="block text-[11px] font-semibold text-[#7C7B76] uppercase tracking-wide mb-1.5">
             Current Line Lyrics
@@ -131,32 +134,6 @@ export default function LyricsLineEditModal({
 
       {/* Footer */}
       <ModalFooter>
-        {/* <div className="px-5 py-3.5 border-t border-[#DEDCD9] flex justify-end gap-2.5 bg-[#FBFBFA]">
-        <button
-          onClick={onCancel}
-          className="px-3.5 py-1.5 text-[13px] rounded-md hover:bg-[#F2F1EE] text-[#37352F] transition-colors font-medium border border-[#DEDCD9]"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-3.5 py-1.5 text-[13px] rounded-md bg-[#2383E2] hover:bg-[#1A66B8] text-white transition-colors font-medium shadow-sm border border-transparent"
-        >
-          Save Changes
-        </button>
-      </div> */}
-        {/* <button
-          onClick={onCancel}
-          className="px-3.5 py-1.5 text-[13px] rounded-md hover:bg-[#F2F1EE] text-[#37352F] transition-colors font-medium border border-[#DEDCD9]"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-3.5 py-1.5 text-[13px] rounded-md bg-[#2383E2] hover:bg-[#1A66B8] text-white transition-colors font-medium shadow-sm border border-transparent"
-        >
-          Save Changes
-        </button> */}
         <ModalFooterButton type="secondary" text="Cancel" onClick={onCancel} />
         <ModalFooterButton type="primary" text="Save Changes" onClick={onConfirm} />
       </ModalFooter>
