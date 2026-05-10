@@ -17,6 +17,7 @@ export default function LyricsLine({
   idx,
   isActive,
   highlight,
+  prepare,
   draggedIndex,
   activeLineIndex,
   isPlaying,
@@ -36,6 +37,7 @@ export default function LyricsLine({
   idx: number;
   isActive: boolean;
   highlight: boolean;
+  prepare: boolean;
   draggedIndex: number | null;
   activeLineIndex: number | null;
   isPlaying: boolean;
@@ -135,7 +137,7 @@ export default function LyricsLine({
         </div>
       </div>
       <div className="justify-center items-center w-1 py-[4px]">
-        <div className={`h-[24px] rounded ${highlight && "bg-[#1A66B8]"}`} />
+        <div className={`h-[24px] rounded ${highlight ? "bg-[#1A66B8]" : prepare ? "bg-[#8CB2DB]" : ""}`} />
       </div>
 
       {/* Main Content Block */}

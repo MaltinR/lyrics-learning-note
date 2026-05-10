@@ -17,6 +17,7 @@ export default function LyricsLine({
   idx,
   isActive,
   highlight,
+  prepare,
   isPlaying,
   setActiveLineIndex,
   onExplanationRequest,
@@ -31,6 +32,7 @@ export default function LyricsLine({
   idx: number;
   isActive: boolean;
   highlight: boolean;
+  prepare: boolean;
   isPlaying: boolean;
   setActiveLineIndex: (value: React.SetStateAction<number | null>) => void;
   onExplanationRequest: (item: LyricItem) => void;
@@ -67,7 +69,7 @@ export default function LyricsLine({
       onClick={() => setActiveLineIndex(idx)}
     >
       <div className="justify-center items-center w-1 py-[4px]">
-        <div className={`h-[24px] rounded ${highlight && "bg-[#1A66B8]"}`} />
+        <div className={`h-[24px] rounded ${highlight ? "bg-[#1A66B8]" : prepare ? "bg-[#8CB2DB]" : ""}`} />
       </div>
 
       <div className="flex-1 flex items-center min-h-[28px]">
@@ -84,7 +86,7 @@ export default function LyricsLine({
             <div
               className={`flex items-center gap-1 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
             >
-              <button
+              {(isActive || isPlaying) && <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors"
                 title="Listen"
                 onClick={isPlaying ? handleStop : handlePlay}
@@ -95,6 +97,7 @@ export default function LyricsLine({
                   <Play className="w-4 h-4" />
                 )}
               </button>
+              }
               {isActive && originalLang != null && <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors"
                 title="TTS"
@@ -119,16 +122,6 @@ export default function LyricsLine({
               >
                 <ScrollText className="w-4 h-4 text-[#787774]" />
               </button>}
-              {/* <button
-                className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors ml-1"
-                title="Edit"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditRequest(line);
-                }}
-              >
-                <Edit3 className="w-4 h-4" />
-              </button> */}
             </div>
           </div>
           {translation != null && <div className="w-full flex items-center text-gray-500 pl-2">

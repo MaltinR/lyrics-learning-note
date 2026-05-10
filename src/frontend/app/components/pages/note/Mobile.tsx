@@ -19,6 +19,7 @@ import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
 
 const defaultLineDuration = 2;
+const prepareDuration = 1;
 
 export default function Page() {
   const { noteId } = useParams();
@@ -404,7 +405,7 @@ export default function Page() {
         lastSaved={lastSaved}
         saveError={saveError}
       />
-      <div className="pb-18 pt-8 pr-4 pl-3 bg-white text-[#37352F] selection:bg-[#cde2f5]">
+      <div className="pb-36 pt-8 pr-4 pl-3 bg-white text-[#37352F] selection:bg-[#cde2f5]">
         {/* Notion Page Container */}
         {/* <audio ref={audioRef} src={audioSrc!} /> */}
         <div className="max-w-3xl mx-auto">
@@ -427,6 +428,7 @@ export default function Page() {
               const isActive = idx === activeLineIndex;
               const highlight =
                 currentTime >= line.audio.from && currentTime < line.audio.to;
+                const prepare = currentTime >= line.audio.from - prepareDuration && currentTime < line.audio.from
 
               return (
                 <LyricsLine
@@ -437,6 +439,7 @@ export default function Page() {
                   idx={idx}
                   isActive={isActive}
                   highlight={highlight}
+                  prepare={prepare}
                   isPlaying={line.id === playingId && isPlaying}
                   setActiveLineIndex={setActiveLineIndex}
                   onExplanationRequest={handleExplanationRequest}

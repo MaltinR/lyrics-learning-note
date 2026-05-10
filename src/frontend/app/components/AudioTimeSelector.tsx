@@ -313,7 +313,8 @@ export default function AudioTimeSelector({
       } 
       else if (dragging.startsWith("zoom")) {
         const deltaSeconds = (deltaX / containerWidth) * durationVal;
-        const minZoomGap = durationVal * 0.05;
+        // Feature: Removed Zone Limit (allows unlimited zoom depth down to 0.1s)
+        const minZoomGap = 0.1;
 
         let newViewStart = viewStartVal;
         let newViewEnd = viewEndVal;
@@ -352,6 +353,54 @@ export default function AudioTimeSelector({
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [dragging, currentPlayTime]);
+
+  // 5. Handle Mouse Wheel Scrolling/Panning
+  useEffect(() => {
+    const trackEl = mainTrackRef.current;
+    if (!trackEl) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault(); // Stop standard page scroll while hovering over the waveform
+      
+      // Determine dominant axis (trackpad uses X, mouse uses Y)
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const shiftFactor = 0.002; // Scroll Sensitivity
+      const shiftSeconds = delta * shiftFactor * (viewEnd - viewStart);
+
+      let newViewStart = viewStart + shiftSeconds;
+      let newViewEnd = viewEnd + shiftSeconds;
+      const currentViewDuration = viewEnd - viewStart;
+
+      // Clamp limits to prevent panning out of bounds
+      if (newViewStart < 0) {
+        newViewStart = 0;
+        newViewEnd = currentViewDuration;
+      } else if (newViewEnd > duration) {
+        newViewEnd = duration;
+        newViewStart = duration - currentViewDuration;
+      }
+
+      setViewStart(newViewStart);
+      setViewEnd(newViewEnd);
+    };
+
+    // Need non-passive to preventDefault on wheel events
+    trackEl.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      trackEl.removeEventListener("wheel", handleWheel);
+    };
+  }, [viewStart, viewEnd, duration]);
+
+  // Feature: Reset Zoom to "Fit" Current Selection
+  const handleFitToSelection = () => {
+    const selDuration = end - start;
+    const safeSelDuration = selDuration > 0.1 ? selDuration : 1; 
+    const padding = safeSelDuration * 0.15;
+    
+    setViewStart(Math.max(0, start - padding));
+    setViewEnd(Math.min(duration, end + padding));
+  };
 
   // Manual Handlers for Input Syncs
   const updateCurrentTime = (val: number) => {
@@ -397,8 +446,19 @@ export default function AudioTimeSelector({
       <div className="flex justify-between items-center text-[13px] text-[#787774]">
         <div className="flex gap-2 items-center">
           <span className="font-medium text-[#37352F]">Audio Selection</span>
-          {isLoading && <span className="animate-pulse">Processing...</span>}
-          {error && <span className="text-[#EB5757]">{error}</span>}
+          
+          {/* Fit Button */}
+          <button 
+            onClick={handleFitToSelection}
+            disabled={isLoading || duration <= 1}
+            className="px-[6px] py-[2px] text-[11px] font-semibold uppercase tracking-wide bg-[#E9E9E7] hover:bg-[#D4D4D2] text-[#37352F] rounded-[4px] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            title="Fit to selection"
+          >
+            Fit
+          </button>
+
+          {isLoading && <span className="animate-pulse ml-2 text-xs">Processing...</span>}
+          {error && <span className="text-[#EB5757] ml-2 text-xs">{error}</span>}
         </div>
 
         {/* Improved Numeric Controls Group */}
@@ -425,7 +485,7 @@ export default function AudioTimeSelector({
 
       <div
         ref={mainTrackRef}
-        className="relative w-full h-24 bg-[#F7F7F5] border border-[#E9E9E7] rounded-[4px] flex items-center px-[2px] select-none overflow-hidden"
+        className="relative w-full h-24 bg-[#F7F7F5] border border-[#E9E9E7] rounded-[4px] flex items-center px-[2px] select-none overflow-hidden cursor-crosshair"
       >
         <div className="absolute inset-x-0 h-[72px] flex items-center gap-[2px] px-1 pointer-events-none">
           {waveData.map((val, idx) => (
