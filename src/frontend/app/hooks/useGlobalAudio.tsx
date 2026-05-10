@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 let globalAudio: HTMLAudioElement | null = null;
 let isGlobalSegmentPlaying = false;
 let globalPlayingId = "";
+// 1. Add a global reference to track the active segment listener
+let activeSegmentListener: (() => void) | null = null;
 const listeners = new Set<() => void>();
 
 if (typeof window !== "undefined") {
@@ -11,6 +13,14 @@ if (typeof window !== "undefined") {
 }
 
 const notifyAll = () => listeners.forEach((fn) => fn());
+
+// 2. Helper to accurately remove the old listener
+const clearSegmentListener = () => {
+  if (globalAudio && activeSegmentListener) {
+    globalAudio.removeEventListener("timeupdate", activeSegmentListener);
+    activeSegmentListener = null;
+  }
+};
 
 interface UseGlobalAudioOptions {
   highRefreshRate?: boolean;
@@ -34,7 +44,11 @@ export default function useGlobalAudio(
   const setSegmentMode = (val: boolean, id: string = "") => {
     isGlobalSegmentPlaying = val;
     globalPlayingId = id;
-    if (!val) setSegmentCurrentTime(0);
+    if (!val) {
+      setSegmentCurrentTime(0);
+      // 3. Automatically clean up the listener whenever segment mode turns off
+      clearSegmentListener();
+    }
     notifyAll();
   };
 
@@ -56,7 +70,6 @@ export default function useGlobalAudio(
     listeners.add(forceUpdate);
 
     const handleTimeUpdate = () => {
-      // Only sync state if we are NOT in segment mode
       if (!isGlobalSegmentPlaying) {
         setCurrentTime(globalAudio!.currentTime);
       } else {
@@ -103,11 +116,9 @@ export default function useGlobalAudio(
     const updateFrame = (time: number) => {
       rAfId = requestAnimationFrame(updateFrame);
 
-      // Throttle to roughly 30 FPS (~33ms) to save CPU/React renders
       if (time - lastTime < 33) return;
       lastTime = time;
 
-      // Only update if actually playing
       if (!globalAudio!.paused) {
         if (isGlobalSegmentPlaying) {
           setSegmentCurrentTime(globalAudio!.currentTime);
@@ -117,7 +128,6 @@ export default function useGlobalAudio(
       }
     };
 
-    // Only start the loop when audio starts playing
     if (isPlaying) {
       rAfId = requestAnimationFrame(updateFrame);
     }
@@ -129,9 +139,12 @@ export default function useGlobalAudio(
   const playSegment = useCallback(
     (initiator: string, from: number, to: number) => {
       if (!globalAudio) return;
+      console.log(`playSegment ${from}->${to}`);
 
-      // 1. Capture where we were BEFORE the segment started
       const originalTime = globalAudio.currentTime;
+
+      // 4. Force-clear the previous active listener before overriding the segment
+      clearSegmentListener();
 
       setSegmentMode(true, initiator);
       globalAudio.currentTime = from;
@@ -139,21 +152,22 @@ export default function useGlobalAudio(
 
       const checkSegmentEnd = () => {
         if (globalAudio && globalAudio.currentTime >= to) {
+          console.log(`segmentEnd: ${globalAudio.currentTime} >= ${to}`);
           globalAudio.pause();
 
-          // 2. Snap back to the original position
-          // This ensures that when we turn off segment mode,
-          // the "normal" listener sees the old time, not the segment end time.
           globalAudio.currentTime = originalTime;
-
+          // Disabling segment mode inherently cleans up `activeSegmentListener` now
           setSegmentMode(false);
-          globalAudio.removeEventListener("timeupdate", checkSegmentEnd);
         }
       };
 
-      globalAudio.removeEventListener("timeupdate", checkSegmentEnd);
+      // 5. Save the newly created reference into the global tracker
+      activeSegmentListener = checkSegmentEnd;
       globalAudio.addEventListener("timeupdate", checkSegmentEnd);
-      globalAudio.play().catch(() => setSegmentMode(false));
+      globalAudio.play().catch((reason) => {
+        console.error(reason);
+        setSegmentMode(false);
+      });
     },
     [],
   );
@@ -163,8 +177,6 @@ export default function useGlobalAudio(
     if (!globalAudio.paused) {
       globalAudio.pause();
     } else {
-      // If we were in segment mode and hit play, we stay at current position
-      // but exit segment mode so the UI starts updating again.
       setSegmentMode(false);
       globalAudio.play().catch(console.error);
     }
@@ -173,7 +185,6 @@ export default function useGlobalAudio(
   const pause = useCallback(() => {
     if (!globalAudio) return;
     globalAudio.pause();
-    // setSegmentMode(false);
   }, []);
 
   const seek = useCallback((time: number) => {

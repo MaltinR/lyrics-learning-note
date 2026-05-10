@@ -24,7 +24,7 @@ import NoteHeader from "~/components/NoteHeaderDesktop";
 import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
 
-const defaultLineDuration = 2;
+const defaultLineDuration = 4;
 
 export default function Page() {
   const { noteId } = useParams();

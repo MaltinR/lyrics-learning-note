@@ -18,7 +18,7 @@ import NoteHeader from "~/components/NoteHeaderMobile";
 import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
 
-const defaultLineDuration = 2;
+const defaultLineDuration = 4;
 const prepareDuration = 1;
 
 export default function Page() {

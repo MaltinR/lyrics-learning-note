@@ -1,8 +1,8 @@
-import { Play, Square, Pause } from "lucide-react";
+import React, { Play, Square, Pause } from "lucide-react";
 import type { ModalType } from "~/types/modalType";
 import AudioTimeSelector from "./AudioTimeSelector";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type LyricItem from "~/interfaces/lyricsItem";
+import type LyricsItem from "~/interfaces/lyricsItem";
 import useGlobalAudio from "~/hooks/useGlobalAudio";
 import { v4 as uuid } from "uuid";
 import ModalFooter from "./ModalFooter";
@@ -18,12 +18,12 @@ export default function LyricsLineEditModal({
   setModal,
 }: {
   audioBlob: Blob;
-  lyricsLine: LyricItem;
+  lyricsLine: LyricsItem;
   fullLyrics: string;
-  onLyricsLineChanged: (item: LyricItem) => void;
+  onLyricsLineChanged: (item: LyricsItem) => void;
   setModal: (type: ModalType) => void;
 }) {
-  const [tempLyricsItem, setTempLyricsItem] = useState<LyricItem>(lyricsLine);
+  const [tempLyricsItem, setTempLyricsItem] = useState<LyricsItem>(lyricsLine);
   const [currentTime, setCurrentTime] = useState<number>(tempLyricsItem.audio.from);
 
   const { playSegment, stop, pause, segmentCurrentTime, isSegmentPlaying } = useGlobalAudio(undefined, {highRefreshRate: true});
@@ -34,7 +34,7 @@ export default function LyricsLineEditModal({
 
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTempLyricsItem((item) => ({
+      setTempLyricsItem((item: LyricsItem) => ({
         ...item,
         text: e.target.value,
         tts: null,
@@ -53,7 +53,7 @@ export default function LyricsLineEditModal({
   }, [tempLyricsItem]);
 
   const handleSelectionChange = useCallback((start: number, end: number) => {
-    setTempLyricsItem((item) => ({ ...item, audio: { from: start, to: end } }));
+    setTempLyricsItem((item: LyricsItem) => ({ ...item, audio: { from: start, to: end } }));
   }, []);
 
   const handleCurrentTimeChange = useCallback((time: number) => {
