@@ -45,7 +45,7 @@ const isMobile = useIsMobile();
             {translatedLyrics != null && (
               <div className="flex items-center text-gray-500">
                 <Languages className="w-4 h-4 mr-0.5" />
-                <div>{`Translation: ${translatedLyrics}`}</div>
+                <div>{translatedLyrics}</div>
               </div>
             )}
           </div>
