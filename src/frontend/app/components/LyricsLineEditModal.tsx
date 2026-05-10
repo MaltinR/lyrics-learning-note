@@ -1,4 +1,4 @@
-import React, { Play, Square, Pause } from "lucide-react";
+import { Play, Square, Pause } from "lucide-react";
 import type { ModalType } from "~/types/modalType";
 import AudioTimeSelector from "./AudioTimeSelector";
 import { useCallback, useEffect, useMemo, useState } from "react";
