@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      // Forces Vite to bypass Bun's buggy web-stream export file
+      "react-dom/server": "react-dom/server.node",
+    },
   },
   server: {
     proxy: {
