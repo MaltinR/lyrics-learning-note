@@ -1,4 +1,6 @@
 from fastapi import FastAPI, APIRouter, Request
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from dotenv import load_dotenv
 
 from schemas import (
@@ -98,6 +100,19 @@ async def get_available_to_langs():
     return await translate_handler.get_available_to_langs()
 
 app.include_router(api_router)
+
+class SPAStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except (StarletteHTTPException, Exception) as ex:
+            # If the file (like /notes/123) isn't found, 
+            # return the main index.html instead of a 404
+            if getattr(ex, "status_code", 0) == 404:
+                return await super().get_response("index.html", scope)
+            raise ex
+
+app.mount("/", SPAStaticFiles(directory="../frontend/build/client", html=True), name="spa")
 
 print("Server is starting to run")
 
