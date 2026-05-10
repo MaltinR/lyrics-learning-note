@@ -6,6 +6,7 @@ export async function detectLang(fullLyrics: string) {
   const payload = {
     fullLyrics,
   };
+  console.log(payload);
   const res = await axios.post(url, payload);
   const data: {
     lang: string;

@@ -4,6 +4,7 @@ import { Loader2, Music, ArrowUp } from 'lucide-react';
 import EntryHeader from '~/components/EntryHeader';
 import type { Route } from './+types/home';
 import { newNote } from '~/lib/note';
+import useIsMobile from '~/hooks/useIsMoile';
 
 export function meta({}: Route.ActionArgs) {
   return [
@@ -19,6 +20,13 @@ export default function Home() {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isMobile) {
+      navigate("/notes");
+    }
+  }, [isMobile, navigate]);
 
   // Timer effect to count time elapsed during processing
   useEffect(() => {

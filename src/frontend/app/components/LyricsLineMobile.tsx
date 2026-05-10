@@ -17,13 +17,8 @@ export default function LyricsLine({
   idx,
   isActive,
   highlight,
-  draggedIndex,
-  activeLineIndex,
   isPlaying,
   setActiveLineIndex,
-  setDraggedIndex,
-  setLyricsLines,
-  onEditRequest,
   onExplanationRequest,
   onPlayRequest,
   onStopRequest,
@@ -36,62 +31,14 @@ export default function LyricsLine({
   idx: number;
   isActive: boolean;
   highlight: boolean;
-  draggedIndex: number | null;
-  activeLineIndex: number | null;
   isPlaying: boolean;
   setActiveLineIndex: (value: React.SetStateAction<number | null>) => void;
-  setDraggedIndex: (value: React.SetStateAction<number | null>) => void;
-  setLyricsLines: (value: React.SetStateAction<LyricItem[]>) => void;
-  onEditRequest: (item: LyricItem) => void;
   onExplanationRequest: (item: LyricItem) => void;
   onPlayRequest: (item: LyricItem) => void;
   onStopRequest: (item: LyricItem) => void;
   onTtsRequest: (item: LyricItem) => void;
   onTranslateRequest: (item: LyricItem) => void;
 }) {
-  // State to track if the cursor is on the drag handle
-  const [isDragEnabled, setIsDragEnabled] = useState(false);
-
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    // Small delay to allow the drag image to generate before changing opacity
-    setTimeout(() => {
-      if (e.target instanceof HTMLElement) e.target.classList.add("opacity-40");
-    }, 0);
-  };
-
-  const handleDragEnter = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-    setLyricsLines((prev) => {
-      const newLyrics = [...prev];
-      const draggedItem = newLyrics[draggedIndex];
-      newLyrics.splice(draggedIndex, 1); // Remove from old position
-      newLyrics.splice(targetIndex, 0, draggedItem); // Insert at new position
-      setDraggedIndex(targetIndex); // Update current dragged index
-
-      // Keep active line highlight on the correct item if it was moved
-      if (activeLineIndex === draggedIndex) setActiveLineIndex(targetIndex);
-      else if (activeLineIndex === targetIndex)
-        setActiveLineIndex(draggedIndex);
-
-      return newLyrics;
-    });
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); // Necessary to allow dropping
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    setDraggedIndex(null);
-    setIsDragEnabled(false); // Reset drag state when dropping
-    if (e.target instanceof HTMLElement)
-      e.target.classList.remove("opacity-40");
-  };
-
   const handlePlay = useCallback(() => {
     onPlayRequest(line);
   }, [line, onPlayRequest]);
@@ -116,29 +63,13 @@ export default function LyricsLine({
   return (
     <div
       key={line.id}
-      draggable={isDragEnabled} // Make draggable conditionally
-      onDragStart={(e) => handleDragStart(e, idx)}
-      onDragEnter={(e) => handleDragEnter(e, idx)}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
       className="group flex items-start py-[2px] transition-opacity cursor-text"
       onClick={() => setActiveLineIndex(idx)}
     >
-      {/* Left Gutter: Notion Icons (+ and ::) */}
-      <div className="w-12 flex-shrink-0 flex justify-end items-center pr-2 pt-[2px] opacity-0 group-hover:opacity-100 transition-opacity">
-        <div 
-          className="text-[#A4A4A3] hover:bg-[#E9E9E7] rounded p-[2px] cursor-grab active:cursor-grabbing"
-          onMouseEnter={() => setIsDragEnabled(true)}  // Enable drag when hovering handle
-          onMouseLeave={() => setIsDragEnabled(false)} // Disable drag when leaving handle
-        >
-          <GripVertical className="w-[18px] h-[18px]" />
-        </div>
-      </div>
       <div className="justify-center items-center w-1 py-[4px]">
         <div className={`h-[24px] rounded ${highlight && "bg-[#1A66B8]"}`} />
       </div>
 
-      {/* Main Content Block */}
       <div className="flex-1 flex items-center min-h-[28px]">
         <div
           className={`w-full flex justify-between items-center flex-col px-2 py-1 rounded-[4px] transition-colors ${
@@ -164,21 +95,21 @@ export default function LyricsLine({
                   <Play className="w-4 h-4" />
                 )}
               </button>
-              {originalLang != null && <button
+              {isActive && originalLang != null && <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors"
                 title="TTS"
                 onClick={handleTts}
               >
                 <Speech className="w-4 h-4" />
               </button>}
-              {originalLang && targetLang && <button
+              {isActive && originalLang && targetLang && <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors"
                 title="Translate"
                 onClick={handleTranslation}
               >
                 <Languages className="w-4 h-4" />
               </button>}
-              {originalLang && targetLang && <button
+              {isActive && originalLang && targetLang && <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors"
                 title="Explanation"
                 onClick={(e) => {
@@ -188,7 +119,7 @@ export default function LyricsLine({
               >
                 <ScrollText className="w-4 h-4 text-[#787774]" />
               </button>}
-              <button
+              {/* <button
                 className="p-1 rounded hover:bg-[#d8e8f8] text-[#787774] transition-colors ml-1"
                 title="Edit"
                 onClick={(e) => {
@@ -197,7 +128,7 @@ export default function LyricsLine({
                 }}
               >
                 <Edit3 className="w-4 h-4" />
-              </button>
+              </button> */}
             </div>
           </div>
           {translation != null && <div className="w-full flex items-center text-gray-500 pl-2">

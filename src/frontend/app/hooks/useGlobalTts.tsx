@@ -15,23 +15,32 @@ export default function useGlobalTts(noteId: string) {
   const loadTts = useCallback(async (ttsId: string) => {
     // Download song
     const downloadTtsUrl: string = `/api/tts/${noteId}/${ttsId}`;
-    const cache = await caches.open("tts-cache");
-    const cachedResponse = await cache.match(downloadTtsUrl);
+    const canCache = window.caches != undefined;
+    if (canCache) {
+      const cache = await caches.open("tts-cache");
+      const cachedResponse = await cache.match(downloadTtsUrl);
 
-    if (cachedResponse) {
-      const blob = await cachedResponse.blob();
-      urlByTtsId[ttsId] = URL.createObjectURL(blob);
+      if (cachedResponse) {
+        const blob = await cachedResponse.blob();
+        urlByTtsId[ttsId] = URL.createObjectURL(blob);
+      } else {
+        const response = await fetch(downloadTtsUrl);
+        if (!response.ok) {
+          throw new Error("Failed to download audio");
+        }
+
+        const responseToCache = response.clone();
+        await cache.put(downloadTtsUrl, responseToCache);
+
+        const blob = await response.blob();
+        urlByTtsId[ttsId] = URL.createObjectURL(blob);
+      }
     } else {
       const response = await fetch(downloadTtsUrl);
       if (!response.ok) {
         throw new Error("Failed to download audio");
       }
 
-      // 4. Clone the response to store it in cache and read the blob
-      const responseToCache = response.clone();
-      await cache.put(downloadTtsUrl, responseToCache);
-
-      // 5. Create an object URL for the audio element
       const blob = await response.blob();
       urlByTtsId[ttsId] = URL.createObjectURL(blob);
     }
