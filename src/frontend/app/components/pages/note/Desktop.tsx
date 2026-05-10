@@ -25,6 +25,7 @@ import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
 
 const defaultLineDuration = 4;
+const prepareDuration = 1;
 
 export default function Page() {
   const { noteId } = useParams();
@@ -481,6 +482,7 @@ export default function Page() {
               const isActive = idx === activeLineIndex;
               const highlight =
                 currentTime >= line.audio.from && currentTime < line.audio.to;
+              const prepare = currentTime >= line.audio.from - prepareDuration && currentTime < line.audio.from;
 
               return (
                 <LyricsLine
@@ -491,6 +493,7 @@ export default function Page() {
                   idx={idx}
                   isActive={isActive}
                   highlight={highlight}
+                  prepare={prepare}
                   draggedIndex={draggedIndex}
                   activeLineIndex={activeLineIndex}
                   isPlaying={line.id === playingId && isPlaying}

@@ -428,7 +428,7 @@ export default function Page() {
               const isActive = idx === activeLineIndex;
               const highlight =
                 currentTime >= line.audio.from && currentTime < line.audio.to;
-                const prepare = currentTime >= line.audio.from - prepareDuration && currentTime < line.audio.from
+              const prepare = currentTime >= line.audio.from - prepareDuration && currentTime < line.audio.from;
 
               return (
                 <LyricsLine
