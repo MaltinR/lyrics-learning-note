@@ -135,12 +135,13 @@ export default function ExplanationModal({
   );
   const [errorText, setErrorText] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [explanation, setExplanation] = useState<string>(
-    targetLang != null
-      ? (tempLyricsLine.explanations.find((el) => el.lang == targetLang?.id)
+  const originalExplanation = useMemo(() => {
+    return targetLang != null
+      ? (lyricsLine.explanations.find((el) => el.lang == targetLang?.id)
           ?.content ?? "")
-      : "",
-  );
+      : "";
+  }, [targetLang, lyricsLine])
+  const [explanation, setExplanation] = useState<string>(originalExplanation);
 
   const generate = useCallback(async () => {
     setIsGenerating(true);
@@ -168,8 +169,14 @@ export default function ExplanationModal({
   }, [originalLang, targetLang, lyricsLine, fullLyrics]);
 
   const handleConfirm = useCallback(() => {
-    onConfirm(tempLyricsLine);
-  }, [onConfirm, tempLyricsLine]);
+    if (explanation.trim() == originalExplanation.trim()) {
+      onCancel();
+    }
+    else
+    {
+      onConfirm(tempLyricsLine);
+    }
+  }, [onCancel, onConfirm, originalExplanation, explanation, tempLyricsLine]);
 
   const handlePlay = useCallback(() => {
     onPlayRequest(lyricsLine);
