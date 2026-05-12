@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect } from "react";
-import type LyricItem from "~/interfaces/lyricsItem";
+import type LyricsItem from "~/interfaces/lyricsItem";
 import { generateTts } from "~/lib/tts";
 
 let globalAudio: HTMLAudioElement | null = null;
@@ -47,10 +47,20 @@ export default function useGlobalTts(noteId: string) {
   }, []);
 
   const playTts = useCallback(
-    async (item: LyricItem, lang: string): Promise<[boolean, string]> => {
+    async (item: LyricsItem, lang: string, lyricsLines: Array<LyricsItem>): Promise<[boolean, string]> => {
       // TODO: Check if text changed after fetch
       let ttsId: string | null = item.tts;
       let isNew = ttsId == null;
+
+      if (isNew) {
+        const trimmedText = item.text.trim();
+        // see if there's same text
+        const sameTextLine = lyricsLines.find(el => el.text.trim() == trimmedText && el.tts != null);
+        if (sameTextLine != null) {
+          // still mark new, because need to save
+          ttsId = sameTextLine.tts;
+        }
+      }
 
       if (ttsId == null) {
         // Get new

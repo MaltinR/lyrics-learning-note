@@ -23,6 +23,7 @@ import type Lang from "~/interfaces/lang";
 import NoteHeader from "~/components/NoteHeaderDesktop";
 import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
+import type Explanation from "~/interfaces/explanation";
 
 const defaultLineDuration = 4;
 const prepareDuration = 1;
@@ -119,15 +120,15 @@ export default function Page() {
           el.id.toLocaleLowerCase().startsWith("en-"),
       );
 
-      if (originalLang != null && originalLangName == null){
-        const lang = fromLangs.find(el => el.id == originalLang);
+      if (originalLang != null && originalLangName == null) {
+        const lang = fromLangs.find((el) => el.id == originalLang);
         if (lang != null) {
           setOriginalLangName(lang.name);
         }
       }
 
       if (targetLang != null && targetLangName == null) {
-        const lang = toLangs.find(el => el.id == targetLang);
+        const lang = toLangs.find((el) => el.id == targetLang);
         if (lang != null) {
           setTargetLangName(lang.name);
         }
@@ -157,48 +158,55 @@ export default function Page() {
     [setOriginalLang, setOriginalLangName],
   );
 
-  const loadSong = useCallback(async (noteId: string) => {
-    try {
-      const data: Note = await getNoteFunc(noteId);
-      setTitle(data.title);
-      setSinger(data.singer);
-      setNote(data);
-      setLyricsLines(data.lyrics);
-      setLyrics(data.references.fullLyrics);
-      if (data.language.original) {
-        setOriginalLang(data.language.original);
-        if (availableOriginalLangs.length > 0) {
-          const lang = availableOriginalLangs.find(el => el.id === data.language.original);
-          if (lang != null) {
-            setOriginalLangName(lang.name);
+  const loadSong = useCallback(
+    async (noteId: string) => {
+      try {
+        const data: Note = await getNoteFunc(noteId);
+        setTitle(data.title);
+        setSinger(data.singer);
+        setNote(data);
+        setLyricsLines(data.lyrics);
+        setLyrics(data.references.fullLyrics);
+        if (data.language.original) {
+          setOriginalLang(data.language.original);
+          if (availableOriginalLangs.length > 0) {
+            const lang = availableOriginalLangs.find(
+              (el) => el.id === data.language.original,
+            );
+            if (lang != null) {
+              setOriginalLangName(lang.name);
+            }
           }
         }
-      }
-      if (data.language.target) {
-        setTargetLang(data.language.target);
-        if (availableTargetLangs.length > 0) {
-          const lang = availableTargetLangs.find(el => el.id === data.language.target);
-          if (lang != null) {
-            setTargetLangName(lang.name);
+        if (data.language.target) {
+          setTargetLang(data.language.target);
+          if (availableTargetLangs.length > 0) {
+            const lang = availableTargetLangs.find(
+              (el) => el.id === data.language.target,
+            );
+            if (lang != null) {
+              setTargetLangName(lang.name);
+            }
           }
         }
-      }
 
-      // Download song
-      const blob = await loadSongFunc(noteId);
-      setAudioSrc(URL.createObjectURL(blob));
-      setAudioBlob(blob);
+        // Download song
+        const blob = await loadSongFunc(noteId);
+        setAudioSrc(URL.createObjectURL(blob));
+        setAudioBlob(blob);
 
-      if (data.references.fullLyrics == null) {
-        setStep("source");
-      } else {
-        setStep("player");
+        if (data.references.fullLyrics == null) {
+          setStep("source");
+        } else {
+          setStep("player");
+        }
+      } catch (e: any) {
+        console.error(e);
+        console.trace();
       }
-    } catch (e: any) {
-      console.error(e);
-      console.trace();
-    }
-  }, [availableOriginalLangs, availableTargetLangs]);
+    },
+    [availableOriginalLangs, availableTargetLangs],
+  );
 
   const detectOriginalLang = useCallback(
     async (lyrics: string | null, setOriginalLang: (lang: string) => void) => {
@@ -262,9 +270,35 @@ export default function Page() {
   }, []);
 
   const handleExplanationRequest = useCallback((line: LyricsItem) => {
+    const trimmedText = line.text.trim();
+    // Check if explanation first
+    const lyricsLine: LyricsItem | null = lyricsLines.find((el: LyricsItem) => {
+      const isSameText = el.text.trim() == trimmedText;
+      if (!isSameText) {
+        return false;
+      }
+      const targetExplanation: Explanation | null = el.explanations.find(explanation => {
+        return explanation.lang == targetLang
+      });
+      if (targetExplanation == null) {
+        return false;
+      }
+      return true;
+  });
+  if (lyricsLine != null) {
+    const updatedExplanation: Explanation = {
+      lang: targetLang,
+      content: lyricsLine.explanations.find(el => el.lang == targetLang)!.content,
+    };
+    const updatedLine = {...line, explanations: [...line.explanations.filter(el => el.lang != targetLang), updatedExplanation]};
+    updateLyricsLine(updatedLine);
+    setCurrentLyricsLine(updatedLine);
+  }
+  else {
     setCurrentLyricsLine(line);
-    setModal("grammar");
-  }, []);
+  }
+  setModal("grammar");
+  }, [lyricsLines, targetLang, updateLyricsLine]);
 
   const handleEditRequest = useCallback((line: LyricsItem) => {
     setCurrentLyricsLine(line);
@@ -305,6 +339,31 @@ export default function Page() {
     [originalLang, pause, playTts, updateLyricsLine],
   );
 
+  const getSameTranslation = useCallback(
+    (text: string, targetLang: string) => {
+      const trimmedText = text.trim();
+      const lyricsLine: LyricsItem | null = lyricsLines.find(
+        (el) => {
+          const sameText = el.text.trim() == trimmedText;
+          if (!sameText) return false;
+          const targetTranslation = el.translations.find(translation => translation.lang == targetLang);
+          return targetTranslation.content != null && targetTranslation.content != "";
+        }
+      );
+      if (lyricsLine == null) {
+        return null;
+      }
+      const result: string | null | undefined = lyricsLine.translations.find(
+        (el) => el.lang == targetLang,
+      )?.content;
+      if (result == null) {
+        return null;
+      }
+      return result;
+    },
+    [lyricsLines],
+  );
+
   const handleLineTranslateRequest = useCallback(
     async (item: LyricsItem) => {
       try {
@@ -316,28 +375,44 @@ export default function Page() {
         )
           return;
         // ignore if it exists already
-        const targetTranslation = item.translations.find(el => el.lang == targetLang);
+        const targetTranslation = item.translations.find(
+          (el) => el.lang == targetLang,
+        );
         if (targetTranslation != null) {
           return;
         }
-        const translation = await getTranslation(
-          originalLang,
-          targetLang,
-          item.text,
-        );
-        updateLyricsLine({
-          ...item,
-          translations: [
-            ...item.translations.filter((el) => el.lang != targetLang),
-            {
-              lang: targetLang,
-              content: translation,
-            },
-          ],
-        });
+        const sameTranslation = getSameTranslation(item.text, targetLang);
+        if (sameTranslation != null) {
+          updateLyricsLine({
+            ...item,
+            translations: [
+              ...item.translations.filter((el) => el.lang != targetLang),
+              {
+                lang: targetLang,
+                content: sameTranslation,
+              },
+            ],
+          });
+        } else {
+          const translation = await getTranslation(
+            originalLang,
+            targetLang,
+            item.text,
+          );
+          updateLyricsLine({
+            ...item,
+            translations: [
+              ...item.translations.filter((el) => el.lang != targetLang),
+              {
+                lang: targetLang,
+                content: translation,
+              },
+            ],
+          });
+        }
       } catch {}
     },
-    [originalLang, targetLang],
+    [originalLang, targetLang, getSameTranslation],
   );
 
   const handleExplanationCancel = useCallback(() => {
@@ -352,27 +427,25 @@ export default function Page() {
     [targetLang],
   );
 
-  const originalLangItem : Lang | null = useMemo(() => {
-    if (originalLang == null || originalLangName == null)
-    {
+  const originalLangItem: Lang | null = useMemo(() => {
+    if (originalLang == null || originalLangName == null) {
       return null;
     }
     return {
       id: originalLang,
       name: originalLangName,
-    }
-  }, [originalLang, originalLangName])
-  
-  const targetLangItem : Lang | null = useMemo(() => {
-    if (targetLang == null || targetLangName == null)
-    {
+    };
+  }, [originalLang, originalLangName]);
+
+  const targetLangItem: Lang | null = useMemo(() => {
+    if (targetLang == null || targetLangName == null) {
       return null;
     }
     return {
       id: targetLang,
       name: targetLangName,
-    }
-  }, [targetLang, targetLangName])
+    };
+  }, [targetLang, targetLangName]);
 
   useEffect(() => {
     if (originalLang == null && lyrics != "" && lyrics != null) {
@@ -382,12 +455,10 @@ export default function Page() {
   }, [lyrics, originalLang, setOriginalLangFunc]);
 
   useEffect(() => {
-
     return () => {
       stop();
-    }
+    };
   }, [stop]);
-  
 
   useEffect(() => {
     loadLangs(
@@ -395,7 +466,7 @@ export default function Page() {
       setAvailableTargetLangs,
       setTargetLang,
       setTargetLangName,
-      setOriginalLangName
+      setOriginalLangName,
     );
   }, [loadLangs]);
 
@@ -427,7 +498,7 @@ export default function Page() {
       }
     };
 
-    // only when selecting 
+    // only when selecting
     if (activeLineIndex != -1) {
       window.addEventListener("keydown", handleKeyDown);
     }
@@ -442,7 +513,7 @@ export default function Page() {
     if (step !== "player" && activeLineIndex != -1) {
       setActiveLineIndex(-1);
     }
-  }, [step, activeLineIndex])
+  }, [step, activeLineIndex]);
 
   // debounce save
   useEffect(() => {
@@ -524,12 +595,14 @@ export default function Page() {
               onChange={(e) => setSinger(e.target.value)}
               value={singer}
             />
-              <div className="text-[#787774] text-sm my-4 flex items-center hover:cursor-pointer" onClick={handleEditLyrics}>
-                <MicVocal className="w-4 h-4"/>
-                <div className="ml-1">{`Edit lyrics${(!lyrics ? " (Lyrics reference is not filled)" : "")}`}</div>
-                </div>
+            <div
+              className="text-[#787774] text-sm my-4 flex items-center hover:cursor-pointer"
+              onClick={handleEditLyrics}
+            >
+              <MicVocal className="w-4 h-4" />
+              <div className="ml-1">{`Edit lyrics${!lyrics ? " (Lyrics reference is not filled)" : ""}`}</div>
+            </div>
           </div>
-
 
           {/* Lyrics List (Blocks) */}
           <div className="flex flex-col">
@@ -537,7 +610,9 @@ export default function Page() {
               const isActive = idx === activeLineIndex;
               const highlight =
                 currentTime >= line.audio.from && currentTime < line.audio.to;
-              const prepare = currentTime >= line.audio.from - prepareDuration && currentTime < line.audio.from;
+              const prepare =
+                currentTime >= line.audio.from - prepareDuration &&
+                currentTime < line.audio.from;
 
               return (
                 <LyricsLine
