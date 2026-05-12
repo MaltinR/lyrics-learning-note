@@ -7,10 +7,12 @@ function LangDropdown({
   lang,
   availableLangs,
   onLangChange,
+  disabled,
 }: {
   lang: string | null;
   availableLangs: Array<Lang>;
   onLangChange: (value: string) => void;
+  disabled: boolean,
 }) {
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -25,6 +27,7 @@ return (
       onChange={onChange}
       // Added flex-1 and w-0
       className="flex-1 w-0 px-2.5 py-2 text- text-sm bg-gray-50 border border-gray-200 rounded text-gray-700 focus:outline-0"
+      disabled={disabled}
     >
       <option value="" disabled>
         Select Language
@@ -127,6 +130,7 @@ export default function NoteHeader({
           lang={originalLang}
           onLangChange={onOriginalLangChange}
           availableLangs={availableOriginalLangs}
+          disabled={true}
         />
         <LangDropdown
           lang={targetLang}
