@@ -9,6 +9,7 @@ export async function loadSong(noteId: string): Promise<Blob> {
 
     if (cachedResponse) {
       const blob = await cachedResponse.blob();
+      console.log("using cache");
       return blob;
     } else {
       const response = await fetch(downloadSongUrl);
