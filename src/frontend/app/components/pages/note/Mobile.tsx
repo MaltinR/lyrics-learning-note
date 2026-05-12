@@ -294,6 +294,11 @@ export default function Page() {
           targetLang == ""
         )
           return;
+        // ignore if it exists already
+        const targetTranslation = item.translations.find(el => el.lang == targetLang);
+        if (targetTranslation != null) {
+          return;
+        }
         const translation = await getTranslation(
           originalLang,
           targetLang,
