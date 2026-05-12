@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router";
 import { v4 as uuid } from "uuid";
 import type Note from "~/interfaces/note";
@@ -48,10 +48,12 @@ export default function Page() {
     null,
   );
   const [originalLang, setOriginalLang] = useState<string | null>(null);
+  const [originalLangName, setOriginalLangName] = useState<string | null>(null);
   const [availableOriginalLangs, setAvailableOriginalLangs] = useState<
     Array<Lang>
   >([]);
   const [targetLang, setTargetLang] = useState<string | null>(null);
+  const [targetLangName, setTargetLangName] = useState<string | null>(null);
   const [availableTargetLangs, setAvailableTargetLangs] = useState<Array<Lang>>(
     [],
   );
@@ -90,108 +92,46 @@ export default function Page() {
     [],
   );
 
-  useEffect(() => {
-    loadLangs(
-      setAvailableOriginalLangs,
-      setAvailableTargetLangs,
-      setTargetLang,
-    );
-  }, []);
-
-  useEffect(() => {
-    if (noteId != null) {
-      loadSong(noteId);
-    }
-  }, [noteId]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      // Prevent standard backspace navigation (optional)
-      if (e.key === "Backspace") {
-        e.preventDefault();
-      }
-
-      if (e.key === "Backspace" || e.key === "Delete") {
-        console.log("Global Backspace pressed");
-        if (
-          activeLineIndex != null &&
-          activeLineIndex < lyricsLines.length &&
-          activeLineIndex >= 0
-        ) {
-          setLyricsLines((lines) =>
-            lines.filter((_, idx) => idx !== activeLineIndex),
-          );
-          setActiveLineIndex(-1);
-        }
-      }
-    };
-
-    // only when selecting
-    if (activeLineIndex != -1) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    // Clean up the event listener on unmount
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [lyricsLines, activeLineIndex]);
-
-  // useEffect(() => {
-  //   if (step !== "player" && activeLineIndex != -1) {
-  //     setActiveLineIndex(-1);
-  //   }
-  // }, [step, activeLineIndex])
-
-  // debounce save
-  useEffect(() => {
-    const delayDebounce = setTimeout(async () => {
-      try {
-        const updatedNote = getNote(
-          note,
-          title,
-          singer,
-          lyricsLines,
-          lyrics,
-          originalLang,
-          targetLang,
-        );
-        if (!updatedNote) return;
-        await save(updatedNote);
-        setLastSaved(new Date());
-      } catch (e: any) {
-        setSaveError(e);
-      }
-    }, 1000); // 1-second delay
-
-    return () => clearTimeout(delayDebounce);
-  }, [note, title, singer, lyricsLines, lyrics, originalLang, targetLang]);
-
   const loadLangs = useCallback(
-    async (
-      setAvailableOriginalLangs: React.Dispatch<React.SetStateAction<Lang[]>>,
-      setAvailableTargetLangs: React.Dispatch<React.SetStateAction<Lang[]>>,
-      setTargetLang: React.Dispatch<React.SetStateAction<string | null>>,
-    ) => {
-      const [fromLangs, toLangs] = await Promise.all([
-        getFromLangs(),
-        getToLangs(),
-      ]);
-      setAvailableOriginalLangs(fromLangs);
-      setAvailableTargetLangs(toLangs);
-
-      const english = toLangs.find(
-        (el) =>
-          el.id.toLowerCase() === "en" ||
-          el.id.toLocaleLowerCase().startsWith("en-"),
-      );
-
-      if (english != null) {
-        setTargetLang(english.id);
-      }
-    },
-    [],
-  );
+      async (
+        setAvailableOriginalLangs: React.Dispatch<React.SetStateAction<Lang[]>>,
+        setAvailableTargetLangs: React.Dispatch<React.SetStateAction<Lang[]>>,
+        setTargetLang: React.Dispatch<React.SetStateAction<string | null>>,
+        setTargetLangName: React.Dispatch<React.SetStateAction<string | null>>,
+        setOriginalLangName: React.Dispatch<React.SetStateAction<string | null>>,
+      ) => {
+        const [fromLangs, toLangs] = await Promise.all([
+          getFromLangs(),
+          getToLangs(),
+        ]);
+        setAvailableOriginalLangs(fromLangs);
+        setAvailableTargetLangs(toLangs);
+  
+        const english = toLangs.find(
+          (el) =>
+            el.id.toLowerCase() === "en" ||
+            el.id.toLocaleLowerCase().startsWith("en-"),
+        );
+  
+        if (originalLang != null && originalLangName == null){
+          const lang = fromLangs.find(el => el.id == originalLang);
+          if (lang != null) {
+            setOriginalLangName(lang.name);
+          }
+        }
+  
+        if (targetLang != null && targetLangName == null) {
+          const lang = toLangs.find(el => el.id == targetLang);
+          if (lang != null) {
+            setTargetLangName(lang.name);
+          }
+        } else if (english != null) {
+          setTargetLang(english.id);
+          setTargetLangName(english.name);
+        }
+      },
+      [originalLang, originalLangName, targetLang, targetLangName],
+    );
 
   const setOriginalLangFunc = useCallback(
     (lang: string) => {
@@ -220,27 +160,33 @@ export default function Page() {
       setLyrics(data.references.fullLyrics);
       if (data.language.original) {
         setOriginalLang(data.language.original);
+        if (availableOriginalLangs.length > 0) {
+          const lang = availableOriginalLangs.find(el => el.id === data.language.original);
+          if (lang != null) {
+            setOriginalLangName(lang.name);
+          }
+        }
       }
       if (data.language.target) {
         setTargetLang(data.language.target);
+        if (availableTargetLangs.length > 0) {
+          const lang = availableTargetLangs.find(el => el.id === data.language.target);
+          if (lang != null) {
+            setTargetLangName(lang.name);
+          }
+        }
       }
 
       // Download song
-
       const blob = await loadSongFunc(noteId);
       setAudioSrc(URL.createObjectURL(blob));
       setAudioBlob(blob);
 
-      // if (data.references.fullLyrics == null) {
-      //   setStep("source");
-      // } else {
-      //   setStep("player");
-      // }
     } catch (e: any) {
       console.error(e);
       console.trace();
     }
-  }, []);
+  }, [availableOriginalLangs, availableTargetLangs]);
 
   const detectOriginalLang = useCallback(
     async (lyrics: string | null, setOriginalLang: (lang: string) => void) => {
@@ -250,19 +196,6 @@ export default function Page() {
     },
     [],
   );
-
-  useEffect(() => {
-    if (originalLang == null && lyrics != "" && lyrics != null) {
-      console.log("setOriginalLangFunc");
-      detectOriginalLang(lyrics, setOriginalLangFunc);
-    }
-  }, [lyrics, originalLang, setOriginalLangFunc]);
-
-  useEffect(() => {
-    return () => {
-      stop();
-    };
-  }, [stop]);
 
   const updateLyricsLine = useCallback(
     (lyricsLine: LyricsItem) => {
@@ -392,6 +325,114 @@ export default function Page() {
     },
     [targetLang],
   );
+  
+    const originalLangItem : Lang | null = useMemo(() => {
+      if (originalLang == null || originalLangName == null)
+      {
+        return null;
+      }
+      return {
+        id: originalLang,
+        name: originalLangName,
+      }
+    }, [originalLang, originalLangName])
+    
+    const targetLangItem : Lang | null = useMemo(() => {
+      if (targetLang == null || targetLangName == null)
+      {
+        return null;
+      }
+      return {
+        id: targetLang,
+        name: targetLangName,
+      }
+    }, [targetLang, targetLangName])
+
+  useEffect(() => {
+    loadLangs(
+      setAvailableOriginalLangs,
+      setAvailableTargetLangs,
+      setTargetLang,
+      setTargetLangName,
+      setOriginalLangName
+    );
+  }, [loadLangs]);
+
+  useEffect(() => {
+    if (noteId != null) {
+      loadSong(noteId);
+    }
+  }, [noteId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      // Prevent standard backspace navigation (optional)
+      if (e.key === "Backspace") {
+        e.preventDefault();
+      }
+
+      if (e.key === "Backspace" || e.key === "Delete") {
+        console.log("Global Backspace pressed");
+        if (
+          activeLineIndex != null &&
+          activeLineIndex < lyricsLines.length &&
+          activeLineIndex >= 0
+        ) {
+          setLyricsLines((lines) =>
+            lines.filter((_, idx) => idx !== activeLineIndex),
+          );
+          setActiveLineIndex(-1);
+        }
+      }
+    };
+
+    // only when selecting
+    if (activeLineIndex != -1) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    // Clean up the event listener on unmount
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [lyricsLines, activeLineIndex]);
+
+  // debounce save
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      try {
+        const updatedNote = getNote(
+          note,
+          title,
+          singer,
+          lyricsLines,
+          lyrics,
+          originalLang,
+          targetLang,
+        );
+        if (!updatedNote) return;
+        await save(updatedNote);
+        setLastSaved(new Date());
+      } catch (e: any) {
+        setSaveError(e);
+      }
+    }, 1000); // 1-second delay
+
+    return () => clearTimeout(delayDebounce);
+  }, [note, title, singer, lyricsLines, lyrics, originalLang, targetLang]);
+
+  useEffect(() => {
+    if (originalLang == null && lyrics != "" && lyrics != null) {
+      console.log("setOriginalLangFunc");
+      detectOriginalLang(lyrics, setOriginalLangFunc);
+    }
+  }, [lyrics, originalLang, setOriginalLangFunc]);
+
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
 
   return (
     <div className="min-h-screen ">
@@ -467,8 +508,8 @@ export default function Page() {
                 onTranslateRequest={handleLineTranslateRequest}
                 lyricsLine={currentLyricsLine!}
                 fullLyrics={lyrics ?? ""}
-                originalLang={originalLang}
-                targetLang={targetLang}
+                originalLang={originalLangItem}
+                targetLang={targetLangItem}
                 onCancel={handleExplanationCancel}
                 onConfirm={handleExplanationConfirm}
               />

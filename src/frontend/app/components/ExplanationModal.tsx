@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getExplanationStream } from "~/lib/explain";
 import { Edit3, Languages, Play, Speech, Square } from "lucide-react";
 import useIsMobile from "~/hooks/useIsMoile";
+import type Lang from "~/interfaces/lang";
 
 function MainContent({
   isPlaying,
@@ -117,8 +118,8 @@ export default function ExplanationModal({
   isPlaying: boolean;
   lyricsLine: LyricsItem;
   fullLyrics: string;
-  originalLang: string | null;
-  targetLang: string | null;
+  originalLang: Lang | null;
+  targetLang: Lang | null;
   onCancel: () => void;
   onConfirm: (lyricsLine: LyricsItem) => void;
   onPlayRequest: (item: LyricsItem) => void;
@@ -130,13 +131,13 @@ export default function ExplanationModal({
     ...lyricsLine,
   });
   const [isGenerated, setIsGenerated] = useState<boolean>(
-    lyricsLine.explanations.find((el) => el.lang == targetLang) != null,
+    lyricsLine.explanations.find((el) => el.lang == targetLang?.id) != null,
   );
   const [errorText, setErrorText] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [explanation, setExplanation] = useState<string>(
     targetLang != null
-      ? (tempLyricsLine.explanations.find((el) => el.lang == targetLang)
+      ? (tempLyricsLine.explanations.find((el) => el.lang == targetLang?.id)
           ?.content ?? "")
       : "",
   );
@@ -151,8 +152,8 @@ export default function ExplanationModal({
     };
     try {
       await getExplanationStream(
-        originalLang!,
-        targetLang!,
+        originalLang!.name,
+        targetLang!.name,
         lyricsLine.text,
         fullLyrics,
         handleChunk,

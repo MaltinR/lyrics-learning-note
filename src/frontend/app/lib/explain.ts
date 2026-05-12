@@ -1,15 +1,15 @@
 import { handleSse } from "./sseHandling";
 
 export async function getExplanationStream(
-  fromLang: string,
-  toLang: string,
+  fromLangName: string,
+  toLangName: string,
   lyricsLine: string,
   fullLyrics: string,
   handleChunk: (chunk: string) => void,
 ) {
   const payload = {
-    fromLang,
-    toLang,
+    fromLang: fromLangName,
+    toLang: toLangName,
     lyricsLine,
     fullLyrics,
   };
