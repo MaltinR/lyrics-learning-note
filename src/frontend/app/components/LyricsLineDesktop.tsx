@@ -203,7 +203,7 @@ export default function LyricsLine({
             </div>
           </div>
           {translation != null && <div className="w-full flex items-center text-gray-500 pl-2">
-            <Languages className="w-3 h-3" />
+            <Languages className="w-3 h-3 min-w-3 min-h-3 max-w-3 max-h-3" />
             <div className="text-sm ml-1">{translation}</div>
           </div>}
         </div>
