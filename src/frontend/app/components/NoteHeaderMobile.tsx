@@ -7,12 +7,12 @@ function LangDropdown({
   lang,
   availableLangs,
   onLangChange,
-  disabled,
+  disabled = false,
 }: {
   lang: string | null;
   availableLangs: Array<Lang>;
   onLangChange: (value: string) => void;
-  disabled: boolean,
+  disabled?: boolean,
 }) {
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
