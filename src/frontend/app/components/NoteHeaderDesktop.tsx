@@ -60,7 +60,7 @@ export default function NoteHeader({
   }, []);
 
   return (
-    <header className="grid grid-cols-[1fr_auto_1fr] items-center h-14 px-6 bg-white dark:bg-[#191919]">
+    <header className="grid grid-cols-[1fr_auto_1fr] items-center h-14 px-6 bg-white ">
       {/* Left Column (Empty to balance the right column) */}
       <div className="text-sm text-[#2f2f2f] flex items-center hover:cursor-pointer" onClick={() => navigate("/notes")}>
         <ChevronLeft className="w-4 h-4"/>
@@ -71,13 +71,13 @@ export default function NoteHeader({
       <div className="flex items-center gap-6">
         {/* Original Language Dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+          <span className="text-xs text-gray-400 font-medium">
             Original:
           </span>
           <select
             value={originalLang || ""}
             onChange={onOriginalLangChange}
-            className="px-2.5 py-1 text-sm bg-gray-50 dark:bg-[#2f2f2f] border border-gray-200 dark:border-[#3f3f3f] rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer"
+            className="px-2.5 py-1 text-sm bg-gray-50 border border-gray-200 rounded text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
             <option value="" disabled>
               Select Language
@@ -92,13 +92,13 @@ export default function NoteHeader({
 
         {/* Target Language Dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+          <span className="text-xs text-gray-400 font-medium">
             Target:
           </span>
           <select
             value={targetLang || ""}
             onChange={onTargetLangChange}
-            className="px-2.5 py-1 text-sm bg-gray-50 dark:bg-[#2f2f2f] border border-gray-200 dark:border-[#3f3f3f] rounded text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer"
+            className="px-2.5 py-1 text-sm bg-gray-50 border border-gray-200 rounded text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
             <option value="" disabled>
               Select Language

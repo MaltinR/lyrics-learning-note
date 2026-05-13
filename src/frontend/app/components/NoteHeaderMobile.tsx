@@ -105,7 +105,7 @@ export default function NoteHeader({
   }, []);
 
   return (
-    <header className="items-center px-3 py-2 bg-white dark:bg-[#191919] border-b border-gray-200">
+    <header className="items-center px-3 py-2 bg-white border-b border-gray-200">
       <div className="h-8 flex items-center justify-between mb-1">
         <div
           className="text-md text-[#2f2f2f] flex items-center"

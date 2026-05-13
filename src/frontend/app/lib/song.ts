@@ -1,7 +1,6 @@
 export async function loadSong(noteId: string): Promise<Blob> {
   const downloadSongUrl: string = `/api/songs/${noteId}/audio`;
   const canCache = window.caches != undefined;
-  console.log(`canCache ${canCache}`);
 
   if (canCache) {
     const cache = await caches.open("song-cache");
@@ -9,7 +8,6 @@ export async function loadSong(noteId: string): Promise<Blob> {
 
     if (cachedResponse) {
       const blob = await cachedResponse.blob();
-      console.log("using cache");
       return blob;
     } else {
       const response = await fetch(downloadSongUrl);

@@ -126,7 +126,7 @@ export default function LyricsLineEditModal({
           <label className="block text-[11px] font-semibold text-[#7C7B76] uppercase tracking-wide mb-1.5">
             Original Reference Content
           </label>
-          <div className="p-3.5 bg-[#FBFBFA] border border-[#DEDCD9] rounded-md text-[13px] text-[#7C7B76] leading-relaxed whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+          <div className="p-3.5 bg-[#FBFBFA] border border-[#DEDCD9] rounded-md text-[13px] text-[#7C7B76] leading-relaxed whitespace-pre-wrap max-h-56 overflow-y-auto">
             {fullLyrics}
           </div>
         </div>

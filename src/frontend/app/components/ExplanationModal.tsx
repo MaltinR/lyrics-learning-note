@@ -83,7 +83,7 @@ const isMobile = useIsMobile();
           </div>
         </div>
       </div>
-      <div className={`${isMobile ? "flex-1 min-h-0 " : "min-h-48 max-h-96 "}flex flex-col overflow-y-scroll mx-4`}>
+      <div className={`${isMobile ? "flex-1 min-h-0 " : "min-h-48 max-h-128 "}flex flex-col overflow-y-scroll mx-4`}>
         {targetLang == null || originalLang == null || errorText != null ? (
           <div className="flex-1 flex flex-col justify-center items-center">
             {originalLang == null && <div>Please select original language</div>}
@@ -198,14 +198,14 @@ export default function ExplanationModal({
     () =>
       originalLang != null &&
       targetLang != null &&
-      originalLang != "" &&
-      targetLang != "",
+      originalLang.id != "" &&
+      targetLang.id != "",
     [originalLang, targetLang],
   );
 
   const translatedLyrics = useMemo(() => {
     const result = lyricsLine.translations.find(
-      (el) => el.lang === targetLang,
+      (el) => el.lang === targetLang?.id,
     )?.content;
     return result != null ? result : null;
   }, [targetLang, lyricsLine]);
@@ -213,9 +213,9 @@ export default function ExplanationModal({
   useEffect(() => {
     setTempLyricsLine((line) => {
       const explanations = [
-        ...line.explanations.filter((el) => el.lang != targetLang),
+        ...line.explanations.filter((el) => el.lang != targetLang?.id),
         {
-          lang: targetLang!,
+          lang: targetLang!.id,
           content: explanation,
         },
       ];
@@ -235,8 +235,8 @@ export default function ExplanationModal({
         handleTranslation={handleTranslation}
         originalLyrics={lyricsLine.text}
         translatedLyrics={translatedLyrics}
-        originalLang={originalLang}
-        targetLang={targetLang}
+        originalLang={originalLang?.id ?? null}
+        targetLang={targetLang?.id ?? null}
         explanation={explanation}
         errorText={errorText}
       />

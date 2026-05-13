@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { v4 as uuid } from "uuid";
 import { MicVocal } from "lucide-react";
@@ -141,7 +141,7 @@ export default function Page() {
   );
 
   const setOriginalLangFunc = useCallback(
-    (lang: string, name: string) => {
+    (lang: string) => {
       // Clear tts as the lang has changed
       // Translation, Explanation as well
       setLyricsLines((lines) =>
@@ -153,9 +153,8 @@ export default function Page() {
         })),
       );
       setOriginalLang(lang);
-      setOriginalLangName(lang);
     },
-    [setOriginalLang, setOriginalLangName],
+    [setOriginalLang],
   );
 
   const loadSong = useCallback(
@@ -209,12 +208,19 @@ export default function Page() {
   );
 
   const detectOriginalLang = useCallback(
-    async (lyrics: string | null, setOriginalLang: (lang: string) => void) => {
+    async (lyrics: string | null, 
+      setOriginalLang: (lang: string) => void,
+      setOriginalLangName: (name: string) => void,
+    ) => {
       if (lyrics == null) return;
       const lang = await detectLang(lyrics);
       setOriginalLang(lang);
+      const langName = availableOriginalLangs.find(el => el.id == lang)?.name;
+      if (langName != null) {
+        setOriginalLangName(langName);
+      }
     },
-    [],
+    [availableOriginalLangs],
   );
 
   const updateLyricsLine = useCallback(
@@ -269,36 +275,48 @@ export default function Page() {
     );
   }, []);
 
-  const handleExplanationRequest = useCallback((line: LyricsItem) => {
-    const trimmedText = line.text.trim();
-    // Check if explanation first
-    const lyricsLine: LyricsItem | null = lyricsLines.find((el: LyricsItem) => {
-      const isSameText = el.text.trim() == trimmedText;
-      if (!isSameText) {
-        return false;
+  const handleExplanationRequest = useCallback(
+    (line: LyricsItem) => {
+      const trimmedText = line.text.trim();
+      // Check if explanation first
+      const lyricsLine: LyricsItem | undefined = lyricsLines.find(
+        (el: LyricsItem) => {
+          const isSameText = el.text.trim() == trimmedText;
+          if (!isSameText) {
+            return false;
+          }
+          const targetExplanation: Explanation | undefined =
+            el.explanations.find((explanation) => {
+              return explanation.lang == targetLang;
+            });
+          if (targetExplanation == null) {
+            return false;
+          }
+          return true;
+        },
+      );
+      if (lyricsLine != null) {
+        const updatedExplanation: Explanation = {
+          lang: targetLang!,
+          content: lyricsLine.explanations.find((el) => el.lang == targetLang)!
+            .content,
+        };
+        const updatedLine = {
+          ...line,
+          explanations: [
+            ...line.explanations.filter((el) => el.lang != targetLang),
+            updatedExplanation,
+          ],
+        };
+        updateLyricsLine(updatedLine);
+        setCurrentLyricsLine(updatedLine);
+      } else {
+        setCurrentLyricsLine(line);
       }
-      const targetExplanation: Explanation | null = el.explanations.find(explanation => {
-        return explanation.lang == targetLang
-      });
-      if (targetExplanation == null) {
-        return false;
-      }
-      return true;
-  });
-  if (lyricsLine != null) {
-    const updatedExplanation: Explanation = {
-      lang: targetLang,
-      content: lyricsLine.explanations.find(el => el.lang == targetLang)!.content,
-    };
-    const updatedLine = {...line, explanations: [...line.explanations.filter(el => el.lang != targetLang), updatedExplanation]};
-    updateLyricsLine(updatedLine);
-    setCurrentLyricsLine(updatedLine);
-  }
-  else {
-    setCurrentLyricsLine(line);
-  }
-  setModal("grammar");
-  }, [lyricsLines, targetLang, updateLyricsLine]);
+      setModal("grammar");
+    },
+    [lyricsLines, targetLang, updateLyricsLine],
+  );
 
   const handleEditRequest = useCallback((line: LyricsItem) => {
     setCurrentLyricsLine(line);
@@ -328,7 +346,7 @@ export default function Page() {
     async (item: LyricsItem) => {
       pause();
       if (originalLang == null) return;
-      const [isNew, ttsId] = await playTts(item, originalLang);
+      const [isNew, ttsId] = await playTts(item, originalLang, lyricsLines);
       if (isNew) {
         updateLyricsLine({
           ...item,
@@ -336,20 +354,22 @@ export default function Page() {
         });
       }
     },
-    [originalLang, pause, playTts, updateLyricsLine],
+    [originalLang, lyricsLines, pause, playTts, updateLyricsLine],
   );
 
   const getSameTranslation = useCallback(
     (text: string, targetLang: string) => {
       const trimmedText = text.trim();
-      const lyricsLine: LyricsItem | null = lyricsLines.find(
-        (el) => {
-          const sameText = el.text.trim() == trimmedText;
-          if (!sameText) return false;
-          const targetTranslation = el.translations.find(translation => translation.lang == targetLang);
-          return targetTranslation.content != null && targetTranslation.content != "";
-        }
-      );
+      const lyricsLine: LyricsItem | undefined = lyricsLines.find((el) => {
+        const sameText = el.text.trim() == trimmedText;
+        if (!sameText) return false;
+        const targetTranslation = el.translations.find(
+          (translation) => translation.lang == targetLang,
+        );
+        return (
+          targetTranslation?.content != null && targetTranslation.content != ""
+        );
+      });
       if (lyricsLine == null) {
         return null;
       }
@@ -449,10 +469,9 @@ export default function Page() {
 
   useEffect(() => {
     if (originalLang == null && lyrics != "" && lyrics != null) {
-      console.log("setOriginalLangFunc");
-      detectOriginalLang(lyrics, setOriginalLangFunc);
+      detectOriginalLang(lyrics, setOriginalLangFunc, setOriginalLangName);
     }
-  }, [lyrics, originalLang, setOriginalLangFunc]);
+  }, [lyrics, originalLang, setOriginalLangFunc, setOriginalLangName]);
 
   useEffect(() => {
     return () => {

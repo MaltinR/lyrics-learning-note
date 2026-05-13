@@ -256,37 +256,49 @@ export default function Page() {
     );
   }, []);
 
-  
-    const handleExplanationRequest = useCallback((line: LyricsItem) => {
+  const handleExplanationRequest = useCallback(
+    (line: LyricsItem) => {
       const trimmedText = line.text.trim();
       // Check if explanation first
-      const lyricsLine: LyricsItem | null = lyricsLines.find((el: LyricsItem) => {
-        const isSameText = el.text.trim() == trimmedText;
-        if (!isSameText) {
-          return false;
-        }
-        const targetExplanation: Explanation | null = el.explanations.find(explanation => {
-          return explanation.lang == targetLang
-        });
-        if (targetExplanation == null) {
-          return false;
-        }
-        return true;
-    });
-    if (lyricsLine != null) {
-      const updatedExplanation: Explanation = {
-        lang: targetLang,
-        content: lyricsLine.explanations.find(el => el.lang == targetLang)!.content,
-      };
-      const updatedLine = {...line, explanations: [...line.explanations.filter(el => el.lang != targetLang), updatedExplanation]};
-      updateLyricsLine(updatedLine);
-      setCurrentLyricsLine(updatedLine);
-    }
-    else {
-      setCurrentLyricsLine(line);
-    }
-    setModal("grammar");
-    }, [lyricsLines, targetLang, updateLyricsLine]);
+      const lyricsLine: LyricsItem | undefined = lyricsLines.find(
+        (el: LyricsItem) => {
+          const isSameText = el.text.trim() == trimmedText;
+          if (!isSameText) {
+            return false;
+          }
+          const targetExplanation: Explanation | undefined = el.explanations.find(
+            (explanation) => {
+              return explanation.lang == targetLang;
+            },
+          );
+          if (targetExplanation == null) {
+            return false;
+          }
+          return true;
+        },
+      );
+      if (lyricsLine != null) {
+        const updatedExplanation: Explanation = {
+          lang: targetLang!,
+          content: lyricsLine.explanations.find((el) => el.lang == targetLang)!
+            .content,
+        };
+        const updatedLine = {
+          ...line,
+          explanations: [
+            ...line.explanations.filter((el) => el.lang != targetLang),
+            updatedExplanation,
+          ],
+        };
+        updateLyricsLine(updatedLine);
+        setCurrentLyricsLine(updatedLine);
+      } else {
+        setCurrentLyricsLine(line);
+      }
+      setModal("grammar");
+    },
+    [lyricsLines, targetLang, updateLyricsLine],
+  );
 
   const handleLinePlayRequest = useCallback(
     (item: LyricsItem) => {
@@ -307,7 +319,7 @@ export default function Page() {
     async (item: LyricsItem) => {
       pause();
       if (originalLang == null) return;
-      const [isNew, ttsId] = await playTts(item, originalLang);
+      const [isNew, ttsId] = await playTts(item, originalLang, lyricsLines);
       if (isNew) {
         updateLyricsLine({
           ...item,
@@ -315,20 +327,22 @@ export default function Page() {
         });
       }
     },
-    [originalLang, pause, playTts, updateLyricsLine],
+    [originalLang, lyricsLines, pause, playTts, updateLyricsLine],
   );
 
   const getSameTranslation = useCallback(
     (text: string, targetLang: string) => {
       const trimmedText = text.trim();
-      const lyricsLine: LyricsItem | null = lyricsLines.find(
-        (el) => {
-          const sameText = el.text.trim() == trimmedText;
-          if (!sameText) return false;
-          const targetTranslation = el.translations.find(translation => translation.lang == targetLang);
-          return targetTranslation.content != null && targetTranslation.content != "";
-        }
-      );
+      const lyricsLine: LyricsItem | undefined = lyricsLines.find((el) => {
+        const sameText = el.text.trim() == trimmedText;
+        if (!sameText) return false;
+        const targetTranslation = el.translations.find(
+          (translation) => translation.lang == targetLang,
+        );
+        return (
+          targetTranslation?.content != null && targetTranslation.content != ""
+        );
+      });
       if (lyricsLine == null) {
         return null;
       }

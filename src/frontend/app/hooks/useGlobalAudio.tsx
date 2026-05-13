@@ -139,7 +139,6 @@ export default function useGlobalAudio(
   const playSegment = useCallback(
     (initiator: string, from: number, to: number) => {
       if (!globalAudio) return;
-      console.log(`playSegment ${from}->${to}`);
 
       const originalTime = globalAudio.currentTime;
 
@@ -152,7 +151,6 @@ export default function useGlobalAudio(
 
       const checkSegmentEnd = () => {
         if (globalAudio && globalAudio.currentTime >= to) {
-          console.log(`segmentEnd: ${globalAudio.currentTime} >= ${to}`);
           globalAudio.pause();
 
           globalAudio.currentTime = originalTime;
