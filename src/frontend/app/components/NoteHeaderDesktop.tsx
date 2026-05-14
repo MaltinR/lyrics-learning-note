@@ -6,7 +6,8 @@ import type Lang from "~/interfaces/lang";
 export default function NoteHeader({
   originalLang,
   targetLang,
-  setOriginalLang,
+  // setOriginalLang,
+  originalLangChangeRequest,
   setTargetLang,
   availableOriginalLangs,
   availableTargetLangs,
@@ -15,7 +16,8 @@ export default function NoteHeader({
 }: {
   originalLang: string | null;
   targetLang: string | null;
-  setOriginalLang: (lang: string) => void;
+  // setOriginalLang: (lang: string) => void;
+  originalLangChangeRequest: (lang: string) => void;
   setTargetLang: React.Dispatch<React.SetStateAction<string | null>>;
   availableOriginalLangs: Array<Lang>;
   availableTargetLangs: Array<Lang>;
@@ -25,9 +27,9 @@ export default function NoteHeader({
   const navigate = useNavigate();
   const onOriginalLangChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setOriginalLang(e.target.value);
+      originalLangChangeRequest(e.target.value);
     },
-    [setOriginalLang],
+    [originalLangChangeRequest],
   );
 
   const onTargetLangChange = useCallback(

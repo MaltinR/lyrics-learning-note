@@ -9,9 +9,6 @@ RUN bun install
 # build
 COPY ./src/frontend .
 
-# DEBUG
-RUN cat /app/frontend/react-router.config.ts
-
 RUN bun run build
 
 # Runtime stage

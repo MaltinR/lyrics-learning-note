@@ -7,9 +7,21 @@ from fastapi import HTTPException
 
 from tts_providers.tts_provider import TtsProvider
 from tts_providers.google.gcloud_tts import GcloudTts
+from tts_providers.google.gemini_tts import GeminiTts
+
+def get_tts_provider() -> TtsProvider:
+    tts_provider_id = os.getenv("TTS_PROVIDER")
+    if tts_provider_id is None:
+        return GeminiTts()
+    match tts_provider_id:
+        case "gcloud":
+            return GcloudTts()
+        case "gemini-tts":
+            return GeminiTts(os.getenv("GEMINI_KEY"))
+    return GeminiTts()
 
 async def process_tts(note_id: str, lang: str, content: str):
-    provider : TtsProvider = GcloudTts()
+    provider : TtsProvider = get_tts_provider()
     audio = await provider.get_tts(lang=lang, content=content)
     
     tts_id = str(uuid.uuid4())

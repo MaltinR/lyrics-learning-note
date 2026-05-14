@@ -24,6 +24,7 @@ import NoteHeader from "~/components/NoteHeaderDesktop";
 import ExplanationModal from "~/components/ExplanationModal";
 import { getTranslation } from "~/lib/translate";
 import type Explanation from "~/interfaces/explanation";
+import ConfirmationModal from "~/components/ConfirmationModal";
 
 const defaultLineDuration = 4;
 const prepareDuration = 1;
@@ -64,6 +65,9 @@ export default function Page() {
   const [availableTargetLangs, setAvailableTargetLangs] = useState<Array<Lang>>(
     [],
   );
+  const [originalLangToBeConfirmed, setOriginalLangToBeConfirmed] = useState<
+    string | null
+  >(null);
 
   const { playingId, isPlaying, stop, pause, playSegment, currentTime } =
     useGlobalAudio();
@@ -157,6 +161,11 @@ export default function Page() {
     [setOriginalLang],
   );
 
+  const originalLangChangeRequest = useCallback((lang: string) => {
+    // show confirmation modal
+    setOriginalLangToBeConfirmed(lang);
+  }, []);
+
   const loadSong = useCallback(
     async (noteId: string) => {
       try {
@@ -208,14 +217,15 @@ export default function Page() {
   );
 
   const detectOriginalLang = useCallback(
-    async (lyrics: string | null, 
+    async (
+      lyrics: string | null,
       setOriginalLang: (lang: string) => void,
       setOriginalLangName: (name: string) => void,
     ) => {
       if (lyrics == null) return;
       const lang = await detectLang(lyrics);
       setOriginalLang(lang);
-      const langName = availableOriginalLangs.find(el => el.id == lang)?.name;
+      const langName = availableOriginalLangs.find((el) => el.id == lang)?.name;
       if (langName != null) {
         setOriginalLangName(langName);
       }
@@ -447,6 +457,31 @@ export default function Page() {
     [targetLang],
   );
 
+  const handleConfirmationCancel = useCallback(() => {
+    setOriginalLangToBeConfirmed(null);
+  }, []);
+
+  const handleConfirmationConfirm = useCallback(
+    (lang: string) => {
+      setOriginalLangFunc(lang);
+      setOriginalLangToBeConfirmed(null);
+    },
+    [setOriginalLangFunc],
+  );
+
+  const originalLangToBeConfirmedLang: Lang | null = useMemo(() => {
+    if (originalLangToBeConfirmed == null) {
+      return null;
+    }
+    const lang = availableOriginalLangs.find(
+      (el) => el.id == originalLangToBeConfirmed,
+    );
+    if (lang == null) {
+      return null;
+    }
+    return lang;
+  }, [availableOriginalLangs, originalLangToBeConfirmed]);
+
   const originalLangItem: Lang | null = useMemo(() => {
     if (originalLang == null || originalLangName == null) {
       return null;
@@ -591,7 +626,7 @@ export default function Page() {
       <NoteHeader
         originalLang={originalLang}
         targetLang={targetLang}
-        setOriginalLang={setOriginalLangFunc}
+        originalLangChangeRequest={originalLangChangeRequest}
         setTargetLang={setTargetLang}
         availableOriginalLangs={availableOriginalLangs}
         availableTargetLangs={availableTargetLangs}
@@ -665,7 +700,7 @@ export default function Page() {
         <MusicPlayer audioUrl={audioSrc!} onPlay={handleMusicPlayerPlay} />
 
         {/* --- Modals Overlay --- */}
-        {modal !== "none" && (
+        {(modal !== "none" || originalLangToBeConfirmedLang != null) && (
           <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4">
             {/* Edit Modal */}
             {modal === "edit" && (
@@ -692,6 +727,14 @@ export default function Page() {
                 targetLang={targetLangItem}
                 onCancel={handleExplanationCancel}
                 onConfirm={handleExplanationConfirm}
+              />
+            )}
+
+            {originalLangToBeConfirmedLang && (
+              <ConfirmationModal
+                onConfirm={handleConfirmationConfirm}
+                onCancel={handleConfirmationCancel}
+                lang={originalLangToBeConfirmedLang}
               />
             )}
           </div>
