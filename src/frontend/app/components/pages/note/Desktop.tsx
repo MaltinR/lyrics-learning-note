@@ -552,8 +552,8 @@ export default function Page() {
       }
     };
 
-    // only when selecting
-    if (activeLineIndex != -1) {
+    // only when selecting, and no modal
+    if (activeLineIndex != -1 && modal == null && originalLangToBeConfirmed == null) {
       window.addEventListener("keydown", handleKeyDown);
     }
 
@@ -561,7 +561,7 @@ export default function Page() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [lyricsLines, activeLineIndex]);
+  }, [lyricsLines, activeLineIndex, modal, originalLangToBeConfirmed]);
 
   useEffect(() => {
     if (step !== "player" && activeLineIndex != -1) {
