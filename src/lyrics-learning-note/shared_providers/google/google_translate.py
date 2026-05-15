@@ -1,4 +1,5 @@
 import os
+import html
 
 from google.cloud import translate_v2
 import google.auth.api_key
@@ -27,7 +28,8 @@ class GoogleTranslate(Translator, LanguageDetector):
             values=content, 
             target_language=to_lang, 
             source_language=from_lang)
-        translation = response["translatedText"]
+        encoded_translation = response["translatedText"]
+        translation = html.unescape(encoded_translation)
         return translation
     
     def get_available_from_langs(self) -> list:
