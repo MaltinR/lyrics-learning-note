@@ -553,7 +553,11 @@ export default function Page() {
     };
 
     // only when selecting, and no modal
-    if (activeLineIndex != -1 && modal == null && originalLangToBeConfirmed == null) {
+    console.log(activeLineIndex);
+    console.log(modal);
+    console.log(originalLangToBeConfirmed);
+    console.log(activeLineIndex != -1 && modal == null && originalLangToBeConfirmed == null);
+    if (activeLineIndex != -1 && modal == "none" && originalLangToBeConfirmed == null) {
       window.addEventListener("keydown", handleKeyDown);
     }
 
